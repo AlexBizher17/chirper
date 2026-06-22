@@ -1,20 +1,25 @@
 <?php
 
-// 1. Daftarkan autoloader Composer agar pihak ketiga terbaca
-require __DIR__ . '/../vendor/autoload.php';
+// 1. Paksa PHP untuk menampilkan eror apa pun ke layar secara radikal
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-// 2. Setel folder penyimpanan log/cache sementara di folder /tmp bawaan Vercel
-// Ini krusial karena Vercel bersifat "read-only" (tidak bisa menulis file baru di folder biasa)
-$app = require_once __DIR__ . '/../bootstrap/app.php';
-$app->useStoragePath('/tmp');
+// 2. Buat folder penyimpanan darurat di memori Vercel agar Laravel tidak mogok
+$cacheDir = '/tmp/storage/framework/views';
+if (!is_dir($cacheDir)) {
+    mkdir($cacheDir, 0755, true);
+}
 
-// 3. Jalankan kernel aplikasi Laravel
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-
-$response = $kernel->handle(
-    $request = Illuminate\Http\Request::capture()
-);
-
-$response->send();
-
-$kernel->terminate($request, $response);
+// 3. Jalankan aplikasi Laravel seperti biasa
+try {
+    require __DIR__ . '/../public/index.php';
+} catch (\Throwable $e) {
+    // Jika Laravel mogok di tengah jalan, tangkap erornya dan cetak di layar browser!
+    echo "<div style='padding:20px; background:#fee; color:#b11; border:1px solid #fcc; font-family:sans-serif;'>";
+    echo "<h2>Aha! Terdeteksi Eror Sistem:</h2>";
+    echo "<p><b>Pesan:</b> " . $e->getMessage() . "</p>";
+    echo "<p><b>File:</b> " . $e->getFile() . " pada baris " . $e->getLine() . "</p>";
+    echo "</div>";
+    exit;
+}
