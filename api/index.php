@@ -12,10 +12,23 @@ if (!is_dir($cacheDir)) {
 }
 
 // 3. Jalankan aplikasi Laravel seperti biasa
+// ... kode bagian atas tetap sama (ini_set, mkdir, dll) ...
+
 try {
-    require __DIR__ . '/../public/index.php';
+    $app = require __DIR__ . '/../bootstrap/app.php';
+    
+    // SUNTIKAN AMPUH: Paksa Laravel mendaftarkan View Service secara manual
+    $app->register(Illuminate\View\ViewServiceProvider::class);
+    
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    $response = $kernel->handle(
+        $request = Illuminate\Http\Request::capture()
+    );
+    $response->send();
+    $kernel->terminate($request, $response);
+
 } catch (\Throwable $e) {
-    // Jika Laravel mogok di tengah jalan, tangkap erornya dan cetak di layar browser!
+    // ... kode catch eror darurat kamu ...
     echo "<div style='padding:20px; background:#fee; color:#b11; border:1px solid #fcc; font-family:sans-serif;'>";
     echo "<h2>Aha! Terdeteksi Eror Sistem:</h2>";
     echo "<p><b>Pesan:</b> " . $e->getMessage() . "</p>";
